@@ -18,11 +18,14 @@ import android.util.Log
 import android.view.View
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.Button
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalContext
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
+import com.linc.audiowaveform.AudioWaveform
+import java.util.*
 
 var recordAudioPermissionGranted = false
 var modifyAudioSettingsPermissionGranted = false
@@ -66,6 +69,7 @@ class MainActivity : ComponentActivity(), Visualizer.OnDataCaptureListener {
         samplingRate: Int
     ) {
         Log.d("Visualizer", "Here in waveform data capture")
+        Log.d("Visualizer", Arrays.toString(waveform))
 
 
     }
