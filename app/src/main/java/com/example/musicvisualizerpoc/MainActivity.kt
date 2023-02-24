@@ -1,37 +1,40 @@
 package com.example.musicvisualizerpoc
 
-import android.content.Context
-import android.media.AudioManager
+import android.media.audiofx.Visualizer
+import android.opengl.ETC1.getHeight
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.musicvisualizerpoc.ui.theme.MusicVisualizerPOCTheme
-import android.media.audiofx.Visualizer
-import android.util.Log
-import android.view.View
-import androidx.compose.foundation.layout.Column
-import androidx.compose.material.Button
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.platform.LocalContext
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
-import com.linc.audiowaveform.AudioWaveform
 import java.util.*
+import kotlin.math.ceil
+
 
 var recordAudioPermissionGranted = false
 var modifyAudioSettingsPermissionGranted = false
 
 
 class MainActivity : ComponentActivity(), Visualizer.OnDataCaptureListener {
+    var bytes:ByteArray = byteArrayOf(0x01, 0x02, 0x03)
+    val density:Float = 50f
+    val gap:Int = 4
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
@@ -46,11 +49,36 @@ class MainActivity : ComponentActivity(), Visualizer.OnDataCaptureListener {
                         getRecordAudioPermission()
                         getModifyAudioSettingsPermission()
                         startVisualizer()
+
+                        Canvas(modifier = Modifier.fillMaxSize(), onDraw = {
+                            val canvasWidth = size.width
+                            val canvasHeight = size.height
+                            val barWidth = canvasWidth / density
+                            val div = bytes!!.size / density
+                            Log.d("here",Arrays.toString(bytes))
+                            for (i in 0 until density.toInt()) {
+                                val bytePosition = ceil((i * div).toDouble()).toInt()
+                                val top = canvasHeight +
+                                        (Math.abs(bytes!![bytePosition]+ 128) ) * canvasHeight / 128
+                                val barX = i * barWidth + barWidth / 2
+                                drawLine(
+                                    start = Offset(x = barX, y = canvasHeight),
+                                    end = Offset(x = barX, y = top),
+                                    color = Color.Blue,
+                                    strokeWidth = barWidth - gap
+                                )
+                            }
+
+                        } )
+
                     }
                 }
             }
         }
     }
+
+
+
     fun startVisualizer() {
 
         if(recordAudioPermissionGranted and modifyAudioSettingsPermissionGranted)
@@ -63,14 +91,14 @@ class MainActivity : ComponentActivity(), Visualizer.OnDataCaptureListener {
 
         }
     }
+
     override fun onWaveFormDataCapture(
         visualizer: Visualizer?,
         waveform: ByteArray?,
         samplingRate: Int
     ) {
-        Log.d("Visualizer", "Here in waveform data capture")
-        Log.d("Visualizer", Arrays.toString(waveform))
-
+        //Log.d("Visualizer", "Here in waveform data capture")
+        bytes = waveform!!
 
     }
 
@@ -153,3 +181,14 @@ fun getModifyAudioSettingsPermission() {
     }
 }
 
+fun byteArrayToUnsignedInt(byteArray: ByteArray): Int {
+    var result = 0
+    for (i in byteArray.indices) {
+        result = result or ((byteArray[i].toInt() and 0xFF) shl (8 * i))
+    }
+    return result
+}
+@Composable
+fun drawWaveForm(bytes: ByteArray)  {
+
+}
