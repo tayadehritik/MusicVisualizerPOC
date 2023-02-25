@@ -1,7 +1,7 @@
 package com.example.musicvisualizerpoc
 
 import android.media.audiofx.Visualizer
-import android.opengl.ETC1.getHeight
+import android.media.audiofx.Visualizer.OnDataCaptureListener
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -13,8 +13,9 @@ import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
@@ -24,7 +25,6 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
 import java.util.*
-import kotlin.math.ceil
 
 
 var recordAudioPermissionGranted = false
@@ -32,7 +32,8 @@ var modifyAudioSettingsPermissionGranted = false
 
 
 class MainActivity : ComponentActivity(), Visualizer.OnDataCaptureListener {
-    var bytes:ByteArray = byteArrayOf(0x01, 0x02, 0x03)
+
+    var bytes:ByteArray? = null
     val density:Float = 50f
     val gap:Int = 4
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,28 +49,43 @@ class MainActivity : ComponentActivity(), Visualizer.OnDataCaptureListener {
                     Column {
                         getRecordAudioPermission()
                         getModifyAudioSettingsPermission()
-                        startVisualizer()
+                        if(bytes==null)
+                        {
+                            startVisualizer()
+                        }
 
-                        Canvas(modifier = Modifier.fillMaxSize(), onDraw = {
-                            val canvasWidth = size.width
-                            val canvasHeight = size.height
-                            val barWidth = canvasWidth / density
-                            val div = bytes!!.size / density
-                            Log.d("here",Arrays.toString(bytes))
-                            for (i in 0 until density.toInt()) {
-                                val bytePosition = ceil((i * div).toDouble()).toInt()
-                                val top = canvasHeight +
-                                        (Math.abs(bytes!![bytePosition]+ 128) ) * canvasHeight / 128
-                                val barX = i * barWidth + barWidth / 2
-                                drawLine(
-                                    start = Offset(x = barX, y = canvasHeight),
-                                    end = Offset(x = barX, y = top),
-                                    color = Color.Blue,
-                                    strokeWidth = barWidth - gap
-                                )
+
+                        val data = remember {
+                            mutableStateListOf<ByteArray>()
+                        }
+                        if(!data.isEmpty())
+                        {
+                            Log.d("name", Arrays.toString(data.first()))
+
+
+                        }
+                        Canvas(modifier = Modifier.fillMaxSize()) {
+
+                            val nonEmpty = byteArrayOf(0x01, 0x02, 0x03)
+                            data.clear()
+                            if(bytes!=null)
+                            {
+                                data.add(bytes!!)
+                            }
+                            else{
+                                data.add(nonEmpty)
                             }
 
-                        } )
+                            val canvasWidth = size.width
+                            val canvasHeight = size.height
+                            drawLine(
+                                start = Offset(x = canvasWidth, y = 0f),
+                                end = Offset(x = 0f, y = canvasHeight),
+                                color = Color.Blue
+                            )
+                        }
+
+                        //Initial composition
 
                     }
                 }
@@ -84,27 +100,28 @@ class MainActivity : ComponentActivity(), Visualizer.OnDataCaptureListener {
         if(recordAudioPermissionGranted and modifyAudioSettingsPermissionGranted)
         {
             val visualizer = Visualizer(0)
-            visualizer.setDataCaptureListener(this, Visualizer.getMaxCaptureRate(),true, false)
-            val capture_size = 256
-            visualizer.setCaptureSize(capture_size)
+            visualizer.setEnabled(false)
+            visualizer.setDataCaptureListener(this,Visualizer.getMaxCaptureRate(), true, false)
+            visualizer.setCaptureSize(256)
             visualizer.setEnabled(true);
 
         }
     }
+
 
     override fun onWaveFormDataCapture(
         visualizer: Visualizer?,
         waveform: ByteArray?,
         samplingRate: Int
     ) {
-        //Log.d("Visualizer", "Here in waveform data capture")
-        bytes = waveform!!
-
+        bytes = waveform
     }
 
     override fun onFftDataCapture(visualizer: Visualizer?, fft: ByteArray?, samplingRate: Int) {
-        Log.d("Visualizer", "Here in Fft data capture")
+
     }
+
+
 }
 
 @Composable
@@ -189,6 +206,6 @@ fun byteArrayToUnsignedInt(byteArray: ByteArray): Int {
     return result
 }
 @Composable
-fun drawWaveForm(bytes: ByteArray)  {
+fun drawWaveForm()  {
 
 }
