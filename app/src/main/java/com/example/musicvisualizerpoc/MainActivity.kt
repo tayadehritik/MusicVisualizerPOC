@@ -1,7 +1,9 @@
 package com.example.musicvisualizerpoc
 
+import android.content.Intent
 import android.media.audiofx.Visualizer
 import android.os.Bundle
+import android.os.PowerManager
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -20,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PaintingStyle.Companion.Stroke
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.musicvisualizerpoc.ui.theme.MusicVisualizerPOCTheme
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -51,7 +54,7 @@ class MainActivity : ComponentActivity(), Visualizer.OnDataCaptureListener {
                     Column {
                         getRecordAudioPermission()
                         getModifyAudioSettingsPermission()
-
+                        foregroundServiceButtons()
 
                         if(bytes==null)
                         {
@@ -73,11 +76,9 @@ class MainActivity : ComponentActivity(), Visualizer.OnDataCaptureListener {
                                 .drawWithCache {
                                     val nonEmpty = byteArrayOf(0x01, 0x02, 0x03)
                                     data.clear()
-                                    if(bytes!=null)
-                                    {
+                                    if (bytes != null) {
                                         data.add(bytes!!)
-                                    }
-                                    else{
+                                    } else {
                                         data.add(nonEmpty)
                                     }
 
@@ -92,7 +93,9 @@ class MainActivity : ComponentActivity(), Visualizer.OnDataCaptureListener {
                                     val waveform = data.first()
                                     for (i in 1 until waveform.size) {
                                         val yPosition: Float =
-                                            if (waveform.get(i) > 0) canvasHeight - yIncrement * waveform.get(i) else -(yIncrement * waveform.get(
+                                            if (waveform.get(i) > 0) canvasHeight - yIncrement * waveform.get(
+                                                i
+                                            ) else -(yIncrement * waveform.get(
                                                 i
                                             ))
                                         path.lineTo(xIncrement * i, yPosition)
@@ -115,6 +118,20 @@ class MainActivity : ComponentActivity(), Visualizer.OnDataCaptureListener {
                     }
                 }
             }
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        // If the screen is off then the device has been locked
+        val powerManager = getSystemService(POWER_SERVICE) as PowerManager
+        val isScreenOn: Boolean = powerManager.isInteractive
+
+        if (!isScreenOn) {
+            // The screen has been locked
+            // do stuff...
+            Log.d("screen", "screen is off")
         }
     }
 
@@ -233,4 +250,23 @@ fun byteArrayToUnsignedInt(byteArray: ByteArray): Int {
 @Composable
 fun drawWaveForm(bytes:ByteArray, width:Float, height:Float)  {
 
+}
+
+@Composable
+fun foregroundServiceButtons() {
+    Column {
+        val currentContext = LocalContext.current
+        Button(onClick = {
+            val serviceIntent = Intent(currentContext, ExampleService::class.java)
+            currentContext.startService(serviceIntent)
+        }) {
+            Text(text = "Start Foreground Service")
+        }
+        Button(onClick = {
+            val serviceIntent = Intent(currentContext, ExampleService::class.java)
+            currentContext.stopService(serviceIntent)
+        }) {
+            Text(text = "Stop Foreground Service")
+        }
+    }
 }
