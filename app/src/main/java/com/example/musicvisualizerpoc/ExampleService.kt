@@ -17,13 +17,14 @@ class ExampleService: Service() {
 
         val notificationIntent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(this,
-        0,notificationIntent,PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        0,notificationIntent,PendingIntent.FLAG_IMMUTABLE)
 
         val notification:Notification = NotificationCompat.Builder(this,CHANNEL_ID)
             .setContentTitle("Example Service")
             .setContentText("Example Test")
             .setSmallIcon(R.drawable.ic_android_black_24dp)
             .setContentIntent(pendingIntent)
+            .setOngoing(true)
             .build()
 
         startForeground(1, notification)
