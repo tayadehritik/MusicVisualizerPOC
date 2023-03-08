@@ -32,6 +32,13 @@
                 android:value="" />
         </activity>
         <service android:name=".ExampleService" />
+        <receiver android:name=".MyBroadcastReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.SCREEN_OFF"/>
+                <action android:name="android.intent.action.SCREEN_ON"/>
+            </intent-filter>
+        </receiver>
+
     </application>
 
 </manifest>
