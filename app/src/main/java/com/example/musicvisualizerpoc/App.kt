@@ -19,7 +19,7 @@ public class App: Application() {
             var serviceChannel:NotificationChannel = NotificationChannel(
                 CHANNEL_ID,
                 "Example Service Channel",
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_HIGH
             )
 
             var manager:NotificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

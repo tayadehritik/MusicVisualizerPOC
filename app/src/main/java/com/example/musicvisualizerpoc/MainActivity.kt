@@ -1,13 +1,19 @@
 package com.example.musicvisualizerpoc
 
+import android.app.Activity
+import android.app.KeyguardManager
+import android.app.NotificationManager
+import android.content.Context
 import android.content.Intent
 import android.media.audiofx.Visualizer
+import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.util.Log
+import android.view.Window
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,7 +25,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PaintingStyle.Companion.Stroke
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
@@ -44,6 +49,8 @@ class MainActivity : ComponentActivity(), Visualizer.OnDataCaptureListener {
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
+        turnScreenOnAndKeyguardOff()
+
         setContent {
             MusicVisualizerPOCTheme {
                 // A surface container using the 'background' color from the theme
@@ -119,6 +126,7 @@ class MainActivity : ComponentActivity(), Visualizer.OnDataCaptureListener {
                 }
             }
         }
+
     }
 
     override fun onPause() {
@@ -135,6 +143,10 @@ class MainActivity : ComponentActivity(), Visualizer.OnDataCaptureListener {
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        turnScreenOffAndKeyguardOn()
+    }
 
 
     fun startVisualizer() {
@@ -268,5 +280,36 @@ fun foregroundServiceButtons() {
         }) {
             Text(text = "Stop Foreground Service")
         }
+    }
+}
+
+fun Activity.turnScreenOnAndKeyguardOff() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+        setShowWhenLocked(true)
+        setTurnScreenOn(true)
+    } else {
+        window.addFlags(
+            WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+                    or WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON
+
+        )
+    }
+    Log.d("hritik","here")
+    with(getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            requestDismissKeyguard(this@turnScreenOnAndKeyguardOff, null)
+        }
+    }
+}
+
+fun Activity.turnScreenOffAndKeyguardOn() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+        setShowWhenLocked(false)
+        setTurnScreenOn(false)
+    } else {
+        window.clearFlags(
+            WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+                    or WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON
+        )
     }
 }
