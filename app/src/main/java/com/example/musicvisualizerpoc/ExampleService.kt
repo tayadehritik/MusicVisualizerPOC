@@ -36,7 +36,7 @@ class ExampleService: Service() {
         val screenStateFilter = IntentFilter()
         screenStateFilter.addAction(Intent.ACTION_SCREEN_ON)
         screenStateFilter.addAction(Intent.ACTION_SCREEN_OFF)
-        val listenToBroadcastsFromOtherApps = false
+        val listenToBroadcastsFromOtherApps = true
         val receiverFlags = if (listenToBroadcastsFromOtherApps) {
             ContextCompat.RECEIVER_EXPORTED
         } else {

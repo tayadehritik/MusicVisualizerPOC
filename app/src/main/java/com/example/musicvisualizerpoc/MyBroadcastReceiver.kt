@@ -27,9 +27,13 @@ class MyBroadcastReceiver : BroadcastReceiver() {
             context.showNotificationWithFullScreenIntent(true)
 
         } else if (intent.action.equals(Intent.ACTION_SCREEN_ON)) {
+
             Log.d("hritik", "Screen went on")
             Toast.makeText(context, "screen ON",Toast.LENGTH_LONG).show();
+
         }
+
+
 
 
     }

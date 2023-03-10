@@ -2,16 +2,17 @@ package com.example.musicvisualizerpoc
 
 import android.app.Activity
 import android.app.KeyguardManager
-import android.app.NotificationManager
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.media.audiofx.Visualizer
 import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.util.Log
-import android.view.Window
 import android.view.WindowManager
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
@@ -29,6 +30,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.content.ContextCompat
 import com.example.musicvisualizerpoc.ui.theme.MusicVisualizerPOCTheme
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
@@ -39,7 +41,7 @@ import java.util.*
 
 var recordAudioPermissionGranted = false
 var modifyAudioSettingsPermissionGranted = false
-
+var readPhoneSatePermissionGranted = false
 
 class MainActivity : ComponentActivity(), Visualizer.OnDataCaptureListener {
 
@@ -50,6 +52,7 @@ class MainActivity : ComponentActivity(), Visualizer.OnDataCaptureListener {
 
         super.onCreate(savedInstanceState)
         turnScreenOnAndKeyguardOff()
+        listenForScreenUnlock(this)
 
         setContent {
             MusicVisualizerPOCTheme {
@@ -146,6 +149,9 @@ class MainActivity : ComponentActivity(), Visualizer.OnDataCaptureListener {
     override fun onDestroy() {
         super.onDestroy()
         turnScreenOffAndKeyguardOn()
+    }
+    override fun finish() {
+        super.finish()
     }
 
 
@@ -252,6 +258,37 @@ fun getModifyAudioSettingsPermission() {
     }
 }
 
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+fun getReadPhoneStatePermission() {
+    val readPhoneStatePermissionState = rememberPermissionState(permission =
+    android.Manifest.permission.READ_PHONE_STATE
+    )
+    if (readPhoneStatePermissionState.status.isGranted) {
+        Text("Read Phone State permission Granted")
+        readPhoneSatePermissionGranted = true
+    } else {
+        Column {
+            val textToShow = if (readPhoneStatePermissionState.status.shouldShowRationale) {
+                // If the user has denied the permission but the rationale can be shown,
+                // then gently explain why the app requires this permission
+                "Read Phone State is important for this app. Please grant the permission."
+            } else {
+                // If it's the first time the user lands on this feature, or the user
+                // doesn't want to be asked again for this permission, explain that the
+                // permission is required
+                "Read Phone State permission required for this feature to be available. " +
+                        "Please grant the permission"
+            }
+            Text(textToShow)
+            Button(onClick = { readPhoneStatePermissionState.launchPermissionRequest() }) {
+                Text("Request Read Phone State permission")
+            }
+        }
+    }
+}
+
+
 fun byteArrayToUnsignedInt(byteArray: ByteArray): Int {
     var result = 0
     for (i in byteArray.indices) {
@@ -294,7 +331,7 @@ fun Activity.turnScreenOnAndKeyguardOff() {
 
         )
     }
-    Log.d("hritik","here")
+
     with(getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             requestDismissKeyguard(this@turnScreenOnAndKeyguardOff, null)
@@ -312,4 +349,29 @@ fun Activity.turnScreenOffAndKeyguardOn() {
                     or WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON
         )
     }
+}
+
+fun listenForScreenUnlock(activity: MainActivity) {
+
+    val receiver: BroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action.equals(Intent.ACTION_USER_PRESENT)) {
+
+                Log.d("hritik", "Screen unlocked in activity")
+                Toast.makeText(context, "screen unlocked in activity", Toast.LENGTH_LONG).show();
+                activity.finish()
+
+            }
+        }
+    }
+
+    val screenUnlockFilter = IntentFilter()
+    screenUnlockFilter.addAction(Intent.ACTION_USER_PRESENT)
+    val listenToBroadcastsFromOtherApps = true
+    val receiverFlags = if (listenToBroadcastsFromOtherApps) {
+        ContextCompat.RECEIVER_EXPORTED
+    } else {
+        ContextCompat.RECEIVER_NOT_EXPORTED
+    }
+    ContextCompat.registerReceiver(activity, receiver, screenUnlockFilter,receiverFlags)
 }
