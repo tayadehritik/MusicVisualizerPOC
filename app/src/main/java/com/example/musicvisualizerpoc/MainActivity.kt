@@ -1,5 +1,6 @@
 package com.example.musicvisualizerpoc
 
+import android.app.ActionBar
 import android.app.Activity
 import android.app.KeyguardManager
 import android.content.BroadcastReceiver
@@ -11,7 +12,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.util.Log
-import android.view.WindowManager
+import android.view.*
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -31,6 +32,9 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.example.musicvisualizerpoc.ui.theme.MusicVisualizerPOCTheme
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
@@ -53,6 +57,7 @@ class MainActivity : ComponentActivity(), Visualizer.OnDataCaptureListener {
         super.onCreate(savedInstanceState)
         turnScreenOnAndKeyguardOff()
         listenForScreenUnlock(this)
+
 
         setContent {
             MusicVisualizerPOCTheme {
@@ -129,6 +134,7 @@ class MainActivity : ComponentActivity(), Visualizer.OnDataCaptureListener {
                 }
             }
         }
+        hideSystemUI(actionBar = actionBar, window = window )
 
     }
 
@@ -375,3 +381,43 @@ fun listenForScreenUnlock(activity: MainActivity) {
     }
     ContextCompat.registerReceiver(activity, receiver, screenUnlockFilter,receiverFlags)
 }
+
+
+fun hideSystemUI(actionBar: ActionBar?, window:Window) {
+
+    window.decorView.systemUiVisibility = (
+            View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                    or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    // Hide the nav bar and status bar
+                    or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // Hide nav bar
+                    or View.SYSTEM_UI_FLAG_FULLSCREEN // Hide status bar
+            )
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        window.getAttributes().layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+    }
+
+    WindowCompat.setDecorFitsSystemWindows(window, false)
+
+
+    val windowInsetsController =
+        WindowCompat.getInsetsController(window, window.decorView)
+    // Configure the behavior of the hidden system bars.
+    windowInsetsController.systemBarsBehavior =
+        WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+
+
+
+    // Add a listener to update the behavior of the toggle fullscreen button when
+    // the system bars are hidden or revealed.
+    window.decorView.setOnApplyWindowInsetsListener { view, windowInsets ->
+        // You can hide the caption bar even when the other system bars are visible.
+        // To account for this, explicitly check the visibility of navigationBars()
+        // and statusBars() rather than checking the visibility of systemBars().
+        windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
+
+        view.onApplyWindowInsets(windowInsets)
+    }
+
+}
+
