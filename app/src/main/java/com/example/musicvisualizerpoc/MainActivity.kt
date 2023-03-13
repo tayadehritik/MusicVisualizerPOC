@@ -134,7 +134,7 @@ class MainActivity : ComponentActivity(), Visualizer.OnDataCaptureListener {
                 }
             }
         }
-        hideSystemUI(actionBar = actionBar, window = window )
+        hideSystemUIAndKeepScreenOn(actionBar = actionBar, window = window )
 
     }
 
@@ -383,7 +383,7 @@ fun listenForScreenUnlock(activity: MainActivity) {
 }
 
 
-fun hideSystemUI(actionBar: ActionBar?, window:Window) {
+fun hideSystemUIAndKeepScreenOn(actionBar: ActionBar?, window:Window) {
 
     window.decorView.systemUiVisibility = (
             View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
@@ -418,6 +418,8 @@ fun hideSystemUI(actionBar: ActionBar?, window:Window) {
 
         view.onApplyWindowInsets(windowInsets)
     }
+
+    window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
 }
 
